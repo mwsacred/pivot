@@ -1,0 +1,130 @@
+<html>
+<head>
+    <style>
+        .x-outer-div {
+            position: relative;
+        }
+
+        .x-left-div {
+            position: absolute;
+            overflow: hidden;
+            height: 100%;
+        }
+
+        .x-left.x-top-inner-div {
+        }
+
+        .x-left.x-bottom-inner-div {
+            overflow-x: scroll;
+            overflow-y: hidden;
+        }
+
+        .x-right-div {
+            position: absolute;
+            overflow: hidden;
+            height: 100%;
+        }
+
+        .x-right.x-top-inner-div {
+            overflow-x: hidden;
+            overflow-y: scroll;
+        }
+
+        .x-right.x-bottom-inner-div {
+            width: 100%;
+            overflow: auto
+        }
+
+        .x-theader {
+            border-collapse: collapse;
+            table-layout: fixed;
+            width: 100%;
+        }
+
+        .x-theader th {
+            border: 1px solid black;
+            padding: 0;
+            text-overflow: ellipsis;
+            overflow: hidden;
+            white-space: nowrap;
+            width: 100px;
+            height: 22px;
+        }
+
+        .x-theader td {
+            border: 1px solid black;
+            text-overflow: ellipsis;
+            white-space: nowrap;
+            overflow: hidden;
+            width: 100px;
+            height: 22px;
+        }
+
+        .x-outer-div table {
+            border-collapse: collapse;
+            table-layout: fixed;
+            width: 100%;
+        }
+
+        .x-outer-div tr {
+            height: 20px;
+        }
+
+        .x-outer-div th {
+            text-overflow: ellipsis;
+            white-space: nowrap;
+            overflow: hidden;
+            width: 100px;
+            height: 22px;
+        }
+
+        .x-outer-div td {
+            text-overflow: ellipsis;
+            white-space: nowrap;
+            overflow: hidden;
+            width: 100px;
+            height: 22px;
+        }
+
+        .x-right tr>*:first-child {
+            border-left: 0 !important;
+        }
+
+        .x-bottom-inner-div tr:first-child>* {
+            border-top: 0 !important;
+            text-overflow: ellipsis;
+            white-space: nowrap;
+            overflow: hidden;
+        }
+
+        th.guided {
+            border: 1px solid black;
+            visibility: hidden;
+        }
+
+        .x-outer-div th {
+            box-sizing: border-box;
+            border: 1px solid black;
+        }
+
+        .x-outer-div td {
+            box-sizing: border-box;
+            border: 1px solid black;
+        }
+
+    </style>
+
+    <meta charset="utf-8">
+    <script type="text/javascript" src="xutil.js"></script>
+    <script type="text/javascript" src="template.js"></script>
+    <script type="text/javascript" src="pivot.js"></script>
+    <script type="text/javascript" src="resolver.js"></script>
+    <script type="text/javascript" src="viewModel.js"></script>
+    <script type="text/javascript" src="renderer.js"></script>
+</head>
+<body id="body">
+dsfsd
+<script type="text/javascript" src="testData.js"></script>
+<script type="text/javascript" src="test.js"></script>
+</body>
+</html>
