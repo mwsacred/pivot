@@ -108,9 +108,14 @@ X.define('X.pivot.Renderer', {
         var recHeaderWidth = unit1_1.columnCount * 100 + 1;
         var colHeaderWidth = unit1_2.columnCount * 100;
 
+        var props = {
+            recHeaderWidth: recHeaderWidth,
+            colHeaderWidth: colHeaderWidth
+        };
+
         var resultUnit = new X.pivot.RendererUnit();
         resultUnit.push("<div class='x-outer-div' style='width: 100%; height: 100%'>");
-        resultUnit.push(X.applyTemplate("<div class='x-left-div' style='width: {recHeaderWidth}px'>", { recHeaderWidth: recHeaderWidth }));
+        resultUnit.pushTemplate("<div class='x-left-div' style='width: {recHeaderWidth}px'>", props);
 
         resultUnit.push("<div class='x-left x-top-inner-div'>");
         resultUnit.pushUnit(unit1_1);
@@ -120,7 +125,7 @@ X.define('X.pivot.Renderer', {
         resultUnit.push("</div>");
         resultUnit.push("</div>");
 
-        resultUnit.push(X.applyTemplate("<div class='x-right-div' style='width: calc(100% - {recHeaderWidth}px); left: {recHeaderWidth}px'>", { recHeaderWidth: recHeaderWidth }));
+        resultUnit.pushTemplate("<div class='x-right-div' style='width: calc(100% - {recHeaderWidth}px); left: {recHeaderWidth}px'>", props);
 
         resultUnit.push("<div class='x-right x-top-inner-div'>");
         resultUnit.push("<table class='x-col-theader'>");
@@ -129,7 +134,7 @@ X.define('X.pivot.Renderer', {
         resultUnit.push("</div>");
 
         resultUnit.push("<div class='x-right x-bottom-inner-div' style='height: calc(100% - 22px)'>");
-        resultUnit.push(X.applyTemplate("<table class='x-tbody' style='width: {colHeaderWidth}px; height: 100%'>", { colHeaderWidth: colHeaderWidth }));
+        resultUnit.pushTemplate("<table class='x-tbody' style='width: {colHeaderWidth}px; height: 100%'>", props);
         resultUnit.pushUnit(unit2_2);
         resultUnit.push("</table>");
         resultUnit.push("</div>");
@@ -155,6 +160,9 @@ X.define('X.pivot.RendererUnit', {
     },
     pushUnit: function (unit) {
         [].push.apply(this.buffer, unit.buffer);
+    },
+    pushTemplate: function (expr, props) {
+        this.buffer.push(X.applyTemplate(expr, props));
     },
     toStr: function () {
         return this.buffer.join('');
