@@ -108,7 +108,6 @@ X.define('X.pivot.DataManager', {
                     keyset: rowKeyset,
                     parent: parent,
                     children: [],
-                    records: [],
                     src: rowSrc
                 };
                 parent && parent.children.push(child);
@@ -121,7 +120,6 @@ X.define('X.pivot.DataManager', {
                     keyset: colKeyset,
                     parent: parent,
                     children: [],
-                    columns: [],
                     src: colSrc
                 };
                 parent && parent.children.push(child);
@@ -210,7 +208,6 @@ X.define('X.pivot.DataManager', {
          * value: {
      *  key,
      *  row,
-     *  records, // arr
      * }
          */
         rowInfoMap: {},
@@ -220,7 +217,6 @@ X.define('X.pivot.DataManager', {
          * value: {
      *  key,
      *  field,
-     *  columns, // arr
      * }
          */
         fieldInfoMap: {},
