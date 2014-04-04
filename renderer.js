@@ -108,44 +108,70 @@ X.define('X.pivot.Renderer', {
         var recHeaderWidth = unit1_1.columnCount * 100 + 1;
         var colHeaderWidth = unit1_2.columnCount * 100;
 
+
+        var dps = this.defaultProps;
         var props = {
+            width: dps.width,
+            height: dps.height,
+            scrollHeight: dps.scrollHeight,
             recHeaderWidth: recHeaderWidth,
             colHeaderWidth: colHeaderWidth
         };
 
         var resultUnit = new X.pivot.RendererUnit();
-        resultUnit.push("<div class='x-outer-div' style='width: 100%; height: 100%'>");
-        resultUnit.pushTemplate("<div class='x-left-div' style='width: {recHeaderWidth}px'>", props);
+        resultUnit.pushTemplate("<div class='x-pivot x-outer-div' style='width: {width}; height: {height}'>", props);
 
-        resultUnit.push("<div class='x-left x-top-inner-div'>");
+        resultUnit.pushTemplate("<div class='x-left x-top' style='width: {recHeaderWidth}px'>", props);
         resultUnit.pushUnit(unit1_1);
         resultUnit.push("</div>");
-        resultUnit.push("<div class='x-left x-bottom-inner-div' style='height: calc(100% - 22px)'>");
-        resultUnit.pushUnit(unit2_1);
-        resultUnit.push("</div>");
-        resultUnit.push("</div>");
 
-        resultUnit.pushTemplate("<div class='x-right-div' style='width: calc(100% - {recHeaderWidth}px); left: {recHeaderWidth}px'>", props);
-
-        resultUnit.push("<div class='x-right x-top-inner-div'>");
+        resultUnit.pushTemplate("<div class='x-right x-top' style='width: calc(100% - {recHeaderWidth}px); left: {recHeaderWidth}px'>", props);
         resultUnit.push("<table class='x-col-theader'>");
         resultUnit.pushUnit(unit1_2);
         resultUnit.push("</table>");
         resultUnit.push("</div>");
 
-        resultUnit.push("<div class='x-right x-bottom-inner-div' style='height: calc(100% - 22px)'>");
-        resultUnit.pushTemplate("<table class='x-tbody' style='width: {colHeaderWidth}px; height: 100%'>", props);
+        resultUnit.pushTemplate("<div class='x-bottom-div' style='height: calc(100% - 22px - {scrollHeight})'>", props);
+
+        resultUnit.pushTemplate("<div class='x-left x-bottom' style='width: {recHeaderWidth}px'>", props);
+        resultUnit.pushUnit(unit2_1);
+        resultUnit.push("</div>");
+
+        resultUnit.pushTemplate("<div class='x-right x-bottom' style='width: calc(100% - {recHeaderWidth}px); left: {recHeaderWidth}px'>", props);
+        resultUnit.push("<table class='x-tbody'");
         resultUnit.pushUnit(unit2_2);
         resultUnit.push("</table>");
         resultUnit.push("</div>");
         resultUnit.push("</div>");
         resultUnit.push("</div>");
 
-        document.getElementById('body').innerHTML = resultUnit.toStr();
+        var target = this.target;
+        target.innerHTML = resultUnit.toStr();
+        this.addSyncScrollFn(target);
+    },
+
+    addSyncScrollFn: function (target) {
+        // add syncing column scroll fn
+        // TODO index 기반의 위험한 dom query
+        var colHeaderDom = target.getElementsByTagName('div')[2];
+        var bodyDom = target.getElementsByTagName('div')[5];
+
+        var syncScroll = function () {
+            bodyDom.scrollLeft = colHeaderDom.scrollLeft;
+        };
+
+        // 성능에 문제가 있을 수 있으나 어쩔 수 없음
+        colHeaderDom.addEventListener('scroll', syncScroll);
     }
-}, function () {
+}, function (target) {
     return {
-        selector: null
+        target: target,
+
+        defaultProps: {
+            width: '100%',
+            height: '100%',
+            scrollHeight: '16px'
+        }
     };
 })
 ;

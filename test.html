@@ -1,47 +1,49 @@
 <html>
 <head>
     <style>
-        .x-outer-div {
+        .x-pivot.x-outer-div {
             position: relative;
         }
 
-        .x-left-div {
-            position: absolute;
+        .x-pivot .x-top-div {
             overflow: hidden;
-            height: 100%;
+            position: relative;
         }
 
-        .x-left.x-top-inner-div {
+        .x-pivot .x-left.x-top {
         }
 
-        .x-left.x-bottom-inner-div {
-            overflow-x: scroll;
+        .x-pivot .x-left.x-bottom {
             overflow-y: hidden;
         }
 
-        .x-right-div {
-            position: absolute;
-            overflow: hidden;
-            height: 100%;
-        }
-
-        .x-right.x-top-inner-div {
+        .x-pivot .x-bottom-div {
             overflow-x: hidden;
-            overflow-y: scroll;
+            overflow-y: auto; /* record scroll */
+            position: relative;
         }
 
-        .x-right.x-bottom-inner-div {
-            width: 100%;
-            overflow: auto
+        .x-pivot .x-right {
+            position: absolute;
+            top: 0;
         }
 
-        .x-theader {
+        .x-pivot .x-right.x-top {
+            height: 100%;
+            overflow-x: scroll; /* column scroll */
+            overflow-y: scroll; /* dummy scroll */
+        }
+
+        .x-pivot .x-right.x-bottom {
+            overflow-x: hidden;
+        }
+
+        .x-pivot .x-theader {
             border-collapse: collapse;
             table-layout: fixed;
-            width: 100%;
         }
 
-        .x-theader th {
+        .x-pivot .x-theader th {
             border: 1px solid black;
             padding: 0;
             text-overflow: ellipsis;
@@ -51,7 +53,7 @@
             height: 22px;
         }
 
-        .x-theader td {
+        .x-pivot .x-theader td {
             border: 1px solid black;
             text-overflow: ellipsis;
             white-space: nowrap;
@@ -60,17 +62,17 @@
             height: 22px;
         }
 
-        .x-outer-div table {
+        .x-pivot table {
             border-collapse: collapse;
             table-layout: fixed;
             width: 100%;
         }
 
-        .x-outer-div tr {
+        .x-pivot tr {
             height: 20px;
         }
 
-        .x-outer-div th {
+        .x-pivot th {
             text-overflow: ellipsis;
             white-space: nowrap;
             overflow: hidden;
@@ -78,7 +80,7 @@
             height: 22px;
         }
 
-        .x-outer-div td {
+        .x-pivot td {
             text-overflow: ellipsis;
             white-space: nowrap;
             overflow: hidden;
@@ -86,28 +88,28 @@
             height: 22px;
         }
 
-        .x-right tr>*:first-child {
+        .x-pivot .x-right tr > *:first-child {
             border-left: 0 !important;
         }
 
-        .x-bottom-inner-div tr:first-child>* {
+        .x-pivot .x-bottom tr:first-child > * {
             border-top: 0 !important;
             text-overflow: ellipsis;
             white-space: nowrap;
             overflow: hidden;
         }
 
-        th.guided {
+        .x-pivot th.guided {
             border: 1px solid black;
             visibility: hidden;
         }
 
-        .x-outer-div th {
+        .x-pivot th {
             box-sizing: border-box;
             border: 1px solid black;
         }
 
-        .x-outer-div td {
+        .x-pivot td {
             box-sizing: border-box;
             border: 1px solid black;
         }

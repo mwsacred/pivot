@@ -63,7 +63,6 @@ X.define = function (className, prototypeProps, constructor) {
         tmp = tmp[pkgs[i]];
     }
 
-
     var construct = function () {
         var props = constructor.apply(this, arguments);
         for (var propName in props) {
@@ -81,5 +80,4 @@ X.define = function (className, prototypeProps, constructor) {
             construct.prototype[propName] = prop;
         }
     }
-
 }
