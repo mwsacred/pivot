@@ -122,7 +122,7 @@ X.define('X.pivot.ViewModel', {
         }
 
         function createContexts(vm, info, contexts, renderConfigs, indexOrders, curDimen, maxDimen) {
-            indexOrders = indexOrders || indexOrders;
+            indexOrders = indexOrders || [];
             var children = info.children.slice(0).sort(getSortFn(curDimen + 1));
             var len = children.length;
             if (curDimen === maxDimen) {
@@ -147,6 +147,7 @@ X.define('X.pivot.ViewModel', {
         var recordDeriveIndexOrders = [];
         var columnDeriveIndexOrders = [];
 
+        /* TODO renderConfig를 더 구조화하거나 걷어내고 resolution자체를 쓰는 식으로...*/
         createNonLeafContext(this, rowInfoMap[rootKey], recordContexts, rowRenderConfigs, recordDeriveIndexOrders, 0, rowDimenLen);
         createNonLeafContext(this, fieldInfoMap[rootKey], columnContexts, colRenderConfigs, columnDeriveIndexOrders, 0, colDimenLen);
 
@@ -159,6 +160,55 @@ X.define('X.pivot.ViewModel', {
         this.rowRenderConfigs = rowRenderConfigs;
         this.colRenderConfigs = colRenderConfigs;
 
+        var columnRecords = this.constructColumnRecords(colDimenLen, columnDeriveIndexOrders, columnContexts, colResolutions);
+        this.columnRecords = columnRecords;
+
+        var records = this.constructRecords(rowDimenLen, colDimenLen, recordDeriveIndexOrders, recordContexts, columnDeriveIndexOrders, columnContexts, dataManager, dataIndex);
+        this.records = records;
+    },
+
+    constructColumnRecords: function (colDimenLen, columnDeriveIndexOrders, columnContexts, colResolutions) {
+        var columnRecords = new Array(colDimenLen);
+        for (var i = 0; i < colDimenLen - 1; i++) {
+            columnRecords[i] = [];
+        }
+        var leafRecord = columnRecords[colDimenLen - 1] = new Array(columnDeriveIndexOrders.length);
+
+        var curColDatasrcs = [];
+        for (var i = 0; i < colDimenLen; i++) {
+            curColDatasrcs.push([]);
+        }
+
+        for (var j = 0; j < columnDeriveIndexOrders.length; j++) {
+            var colIdx = columnDeriveIndexOrders[j];
+            var cc = columnContexts[colIdx];
+            if (cc.isLeaf) {
+                var value = colResolutions[colDimenLen - 1].column.textIndex(cc.info.src);
+                leafRecord[colIdx] = { value: value };
+                for (var k = 0; k < colDimenLen; k++) {
+                    curColDatasrcs[k].push(value); // 현재는 span 계산 용
+                }
+            } else {
+                // 전제: columnDeriveIndexOrders가 다소 순서가 바뀌어 있더라도 그룹별 순서는 차례로 유지되고 있다고 가정
+                // afterRender, beforeRender 외에 유동적인 위치에 column이 들어가는 정의가 추가되면 코드를 더 정제해야 함
+                var value = 'SUM'; //colResolutions[cc.level]
+                for (var k = 0; k < colDimenLen; k++) {
+                    curColDatasrcs[k].push(value); // 현재는 span 계산 용
+                }
+                leafRecord[colIdx] = { value: value };
+
+                if (cc.isLastChild) {
+                    var level = cc.level - 1;
+                    var value = colResolutions[level].column.textIndex(cc.info.src);
+                    columnRecords[level].push({ value: value, span: curColDatasrcs[level].length });
+                    curColDatasrcs[level] = [];
+                }
+            }
+        }
+        return columnRecords;
+    },
+
+    constructRecords: function (rowDimenLen, colDimenLen, recordDeriveIndexOrders, recordContexts, columnDeriveIndexOrders, columnContexts, dataManager, dataIndex) {
         var curRecDatasrcs = [];
         for (var i = 0; i < rowDimenLen; i++) {
             curRecDatasrcs.push([]);
@@ -168,6 +218,7 @@ X.define('X.pivot.ViewModel', {
         for (var i = 0; i < colDimenLen; i++) {
             curColDatasrcs.push([]);
         }
+
 
         var records = new Array(recordDeriveIndexOrders.length);
         for (var i = 0; i < recordDeriveIndexOrders.length; i++) {
@@ -185,6 +236,7 @@ X.define('X.pivot.ViewModel', {
                             curColDatasrcs[k].push(value);
                         }
                     } else {
+                        // clone curDatasrc
                         var curDatasrc = curColDatasrcs[cc.level];
                         var values = [];
                         for (var k = 0; k < curDatasrc.length; k++) {
@@ -216,8 +268,7 @@ X.define('X.pivot.ViewModel', {
                 }
             }
         }
-
-        this.records = records;
+        return records;
     },
 
     reductionFnMap: {

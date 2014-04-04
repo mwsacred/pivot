@@ -61,18 +61,36 @@ X.define('X.pivot.Renderer', {
         };
 
         columnHeader = function (unit, val) {
-            unit.push('<th>');
-            unit.pushColumns(val);
+            if (val.span) {
+                unit.pushTemplate('<th colspan="{span}">', { span: val.span });
+            } else {
+                unit.push('<th class="leaf">');
+            }
+            unit.pushColumns(val.value);
             unit.push('</th>');
         };
 
         columnHeaders = function (unit) {
-            unit.push('<tr>');
-            for (var i = 0; i < colLen; i++) {
-                var c = columnContexts[i];
-                unit.push(columnHeader(unit, c.info.key));
+            var columnRecords = vm.columnRecords;
+            var crsLen = columnRecords.length;
+            unit.push('<colgroup>');
+            var cr = columnRecords[crsLen-1];
+            var crLen = cr.length;
+            for (var j = 0; j < crLen; j++) {
+                unit.pushTemplate('<col width="{colWidth}" />', {colWidth: '100px'});
             }
-            unit.push('</tr>');
+            unit.push('</colgroup>');
+
+            for (var i = 0; i < crsLen; i++) {
+                var cr = columnRecords[i];
+                var crLen = cr.length;
+                unit.push('<tr>');
+                for (var j = 0; j < crLen; j++) {
+                    unit.push(columnHeader(unit, cr[j]));
+                }
+                unit.push('</tr>');
+            }
+
         };
 
         tbody = function (unit) {

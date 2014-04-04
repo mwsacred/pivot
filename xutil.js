@@ -41,10 +41,20 @@ var X = {
         return ret;
     },
 
-    applyTemplate: function(expr, props) {
+    applyTemplate: function (expr, props) {
         return new X.Template(expr).apply(props);
     }
 };
+
+(function () {
+    var getCur = Date.now || function () {
+            return new Date().getTime();
+        },
+        cur = getCur();
+    X.__intervalCheck = function () {
+        return -(cur - (cur = getCur()));
+    };
+})();
 
 X.define = function (className, prototypeProps, constructor) {
     var pkgs = className.split('.');

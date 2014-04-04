@@ -6,10 +6,12 @@ var resolutions = [
         keyIndex: 'level1Name',
         sortIndex: 'orderNum',
 
-        columns: [{
-            text: '레벨1',
-            field: 'level1Name'
-        }],
+        columns: [
+            {
+                text: '레벨1',
+                field: 'level1Name'
+            }
+        ],
 
         reductions: [
             {
@@ -21,7 +23,14 @@ var resolutions = [
     {
         type: 'row',
         keyIndex: 'level2Name',
-        sortIndex: 'orderNum'
+        sortIndex: 'orderNum',
+
+        columns: [
+            {
+                text: '레벨2',
+                field: 'level2Name'
+            }
+        ]
     },
     {
         type: 'column',
@@ -29,7 +38,9 @@ var resolutions = [
             return o.accountingDate.getFullYear();
         },
         column: {
-            textIndex: 'dd'
+            textIndex: function (arr) {
+                return arr[0].accountingDate.getFullYear() + '년';
+            }
         }
     },
     {
@@ -37,10 +48,19 @@ var resolutions = [
         keyIndex: function (o) {
             return o.accountingDate.getMonth() + 1;
         },
+
+        column: {
+            textIndex: function (arr) {
+                return (arr[0].accountingDate.getMonth() + 1) + '월';
+            }
+        },
+
         reductions: [
             {
                 cal: 'avg',
-                data: { 'level2Name': '합계' },
+                column: {
+                    textIndex: '합계'
+                },
                 renderer: null
             }
         ]
@@ -51,19 +71,19 @@ var resolutions = [
     }
 ];
 
-var cur = new Date().getTime();
+X.__intervalCheck();
 var dm = resolver.resolve(resolutions, data);
-console.log("resolve : " + -(cur - (cur = new Date().getTime())));
+console.log("resolve : " + X.__intervalCheck());
 
 var vm = new X.pivot.ViewModel();
 vm.initVM(resolutions, dm);
-console.log("constructVM : " + -(cur - (cur = new Date().getTime())));
+console.log("constructVM : " + X.__intervalCheck());
 
 
-var r = new X.pivot.Renderer();
+var r = new X.pivot.Renderer(document.getElementById('body'));
 r.render(vm);
 
-console.log("render : " + -(cur - (cur = new Date().getTime())));
+console.log("render : " + X.__intervalCheck());
 
 
 
