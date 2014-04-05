@@ -14,16 +14,17 @@ X.define('X.pivot.Renderer', {
         var rowHeaderLen = rowResolutions.length;
         var colHeaderLen = colResolutions.length;
 
-        columnHeadersOfRecordHeaders = function (unit) {
+        columnHeadersOfRecordHeaders = function (unit, props) {
             unit.push("<table class='x-theader'>");
             unit.push('<tr>');
+
             for (var i = 0; i < rowHeaderLen; i++) {
                 var rr = rowResolutions[i];
                 var columns = rr.columns || [];
                 var columnLen = columns.length;
                 for (var j = 0; j < columnLen; j++) {
                     var column = columns[j];
-                    unit.push('<th>');
+                    unit.pushTemplate('<th style="height: {columnHeadersHeight}">', props);
                     unit.pushColumns(column.text);
                     unit.push('</th>');
                 }
@@ -56,7 +57,6 @@ X.define('X.pivot.Renderer', {
                     unit.push('</th>');
                 }
             }
-
             unit.push("</tr>");
         };
 
@@ -74,7 +74,7 @@ X.define('X.pivot.Renderer', {
             var columnRecords = vm.columnRecords;
             var crsLen = columnRecords.length;
             unit.push('<colgroup>');
-            var cr = columnRecords[crsLen-1];
+            var cr = columnRecords[crsLen - 1];
             var crLen = cr.length;
             for (var j = 0; j < crLen; j++) {
                 unit.pushTemplate('<col width="{colWidth}" />', {colWidth: '100px'});
@@ -118,7 +118,16 @@ X.define('X.pivot.Renderer', {
         var unit1_2 = new X.pivot.RendererUnit();
         var unit2_2 = new X.pivot.RendererUnit();
 
-        columnHeadersOfRecordHeaders(unit1_1);
+
+        var dps = this.defaultProps;
+        var props = {
+            width: dps.width,
+            height: dps.height,
+            scrollHeight: dps.scrollHeight,
+            columnHeadersHeight: 22 * vm.columnRecords.length + 'px'
+        };
+
+        columnHeadersOfRecordHeaders(unit1_1, props);
         recordHeaders(unit2_1);
         columnHeaders(unit1_2);
         tbody(unit2_2);
@@ -126,36 +135,29 @@ X.define('X.pivot.Renderer', {
         var recHeaderWidth = unit1_1.columnCount * 100 + 1;
         var colHeaderWidth = unit1_2.columnCount * 100;
 
-
-        var dps = this.defaultProps;
-        var props = {
-            width: dps.width,
-            height: dps.height,
-            scrollHeight: dps.scrollHeight,
-            recHeaderWidth: recHeaderWidth,
-            colHeaderWidth: colHeaderWidth
-        };
+        props.recHeaderWidth = recHeaderWidth + 'px';
+        props.colHeaderWidth = colHeaderWidth + 'px';
 
         var resultUnit = new X.pivot.RendererUnit();
         resultUnit.pushTemplate("<div class='x-pivot x-outer-div' style='width: {width}; height: {height}'>", props);
 
-        resultUnit.pushTemplate("<div class='x-left x-top' style='width: {recHeaderWidth}px'>", props);
+        resultUnit.pushTemplate("<div class='x-left x-top' style='width: {recHeaderWidth}'>", props);
         resultUnit.pushUnit(unit1_1);
         resultUnit.push("</div>");
 
-        resultUnit.pushTemplate("<div class='x-right x-top' style='width: calc(100% - {recHeaderWidth}px); left: {recHeaderWidth}px'>", props);
+        resultUnit.pushTemplate("<div class='x-right x-top' style='width: calc(100% - {recHeaderWidth}); left: {recHeaderWidth}'>", props);
         resultUnit.push("<table class='x-col-theader'>");
         resultUnit.pushUnit(unit1_2);
         resultUnit.push("</table>");
         resultUnit.push("</div>");
 
-        resultUnit.pushTemplate("<div class='x-bottom-div' style='height: calc(100% - 22px - {scrollHeight})'>", props);
+        resultUnit.pushTemplate("<div class='x-bottom-div' style='height: calc(100% - {columnHeadersHeight} - {scrollHeight})'>", props);
 
-        resultUnit.pushTemplate("<div class='x-left x-bottom' style='width: {recHeaderWidth}px'>", props);
+        resultUnit.pushTemplate("<div class='x-left x-bottom' style='width: {recHeaderWidth}'>", props);
         resultUnit.pushUnit(unit2_1);
         resultUnit.push("</div>");
 
-        resultUnit.pushTemplate("<div class='x-right x-bottom' style='width: calc(100% - {recHeaderWidth}px); left: {recHeaderWidth}px'>", props);
+        resultUnit.pushTemplate("<div class='x-right x-bottom' style='width: calc(100% - {recHeaderWidth}); left: {recHeaderWidth}'>", props);
         resultUnit.push("<table class='x-tbody'");
         resultUnit.pushUnit(unit2_2);
         resultUnit.push("</table>");
