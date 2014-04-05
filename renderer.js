@@ -14,6 +14,7 @@ X.define('X.pivot.Renderer', {
         var rowHeaderLen = rowResolutions.length;
         var colHeaderLen = colResolutions.length;
 
+        // TODO viewModel에서 제공해주는 data를 써야 함(현재는 column.text로...).
         columnHeadersOfRecordHeaders = function (unit, props) {
             unit.push("<table class='x-theader'>");
             unit.push('<tr>');
@@ -37,27 +38,20 @@ X.define('X.pivot.Renderer', {
             unit.push("<table class='x-rec-theader'>");
 
             for (var i = 0; i < recLen; i++) {
-                unit.push(recordHeader(unit, recordContexts[i]));
+                unit.push("<tr>");
+                unit.push(recordHeader(unit, vm.rowHeaderRecords[i]));
+                unit.push("</tr>");
+//                unit.push(recordHeader(unit, recordContexts[i]));
             }
             unit.push("</table>");
         };
 
-        recordHeader = function (unit, recordContext) {
-            unit.push('');
-            var record = recordContext.info.src[0];
-            unit.push("<tr>");
-            for (var i = 0; i < rowHeaderLen; i++) {
-                var rr = rowResolutions[i];
-                var columns = rr.columns || [];
-                var columnLen = columns.length;
-                for (var j = 0; j < columnLen; j++) {
-                    var column = columns[j];
-                    unit.push('<th>');
-                    unit.push(record[column.field]);
-                    unit.push('</th>');
-                }
+        recordHeader = function (unit, record) {
+            for (var i = 0; i < record.length; i++) {
+                unit.push('<th>');
+                unit.push(record[i]);
+                unit.push('</th>');
             }
-            unit.push("</tr>");
         };
 
         columnHeader = function (unit, val) {
@@ -123,8 +117,10 @@ X.define('X.pivot.Renderer', {
         var props = {
             width: dps.width,
             height: dps.height,
+            recordWidth: dps.recordWidth,
+            recordHeight: dps.recordHeight,
             scrollHeight: dps.scrollHeight,
-            columnHeadersHeight: 22 * vm.columnRecords.length + 'px'
+            columnHeadersHeight: dps.recordHeight.replace(/\D+/, '') * vm.columnRecords.length + 'px'
         };
 
         columnHeadersOfRecordHeaders(unit1_1, props);
@@ -136,7 +132,7 @@ X.define('X.pivot.Renderer', {
         var colHeaderWidth = unit1_2.columnCount * 100;
 
         props.recHeaderWidth = recHeaderWidth + 'px';
-        props.colHeaderWidth = colHeaderWidth + 'px';
+        props.colHeaderWidth = vm.columnRecords[vm.columnRecords.length - 1].length + 'px'; // CHECK 현재는 trivial
 
         var resultUnit = new X.pivot.RendererUnit();
         resultUnit.pushTemplate("<div class='x-pivot x-outer-div' style='width: {width}; height: {height}'>", props);
@@ -190,12 +186,15 @@ X.define('X.pivot.Renderer', {
         defaultProps: {
             width: '100%',
             height: '100%',
+            recordWidth: '100px',
+            recordHeight: '22px',
             scrollHeight: '16px'
         }
     };
 })
 ;
 
+// TODO pushColumns가 없도록 refactoring 필요. pushColumns에 의존하던 기능들은 vm.* 기반으로 변경해야 함
 X.define('X.pivot.RendererUnit', {
     push: function () {
         [].push.apply(this.buffer, arguments);

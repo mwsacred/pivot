@@ -15,6 +15,10 @@ var X = {
         return (getter instanceof Function) ? index(o) : !getter ? o : o ? o[getter] : 0 === o ? 0 : fallback;
     },
 
+    getConstantGetter: function(val) {
+        return function() { return val; } // CHECK closure 생성.
+    },
+
     getPropGetter: function (getter) {
         return (getter instanceof Function) ? getter : !getter ? function (o) {
             return o;

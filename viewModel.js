@@ -1,4 +1,8 @@
 X.define('X.pivot.ViewModel', {
+    createTextIndexFn: function(field) {
+        return function(arr) { return arr[0][field]; };
+    },
+
     initVM: function (resolutions, dataManager) {
         // 1. rowInfo, colInfo를 root로 부터 sort하면서 indexing
         var rootKey = 'total'; // TODO 설정으로...
@@ -13,7 +17,7 @@ X.define('X.pivot.ViewModel', {
 
         var dataIndex;
 
-        function resolveReductions(reductions) {
+        function resolveReductions(reductions, vm) {
             var ret = {
                 before: [],
                 after: []
@@ -24,7 +28,22 @@ X.define('X.pivot.ViewModel', {
                 var r = reductions[i];
                 if ('->' === r) {
                     afterFlag = true;
-                } else if (afterFlag) {
+                    continue;
+                }
+
+                var cal = r.cal;
+                r.fn = cal instanceof Function ? cal
+                    : vm.reductionFnMap[cal || 'sum'] || vm.reductionFnMap.sum;
+
+                if(r.column && !(r.column.textIndex instanceof Function)) {
+                    if('string' == typeof r.column.textIndex) {
+                        r.column.textIndex = vm.createTextIndexFn(r.column.textIndex);
+                    } else {
+                        r.column.textIndex = X.getConstantGetter(r.column.text);
+                    }
+                }
+
+                if (afterFlag) {
                     ret.after.push(r);
                 } else {
                     ret.before.push(r);
@@ -51,7 +70,7 @@ X.define('X.pivot.ViewModel', {
                     continue;
                 }
 
-                var reductInfo = resolveReductions(resol.reductions || []);
+                var reductInfo = resolveReductions(resol.reductions || [], this);
                 renderConfigs.push({
                     sortIndex: resol.sortIndex,
                     reductionBeforeChlidren: reductInfo.before,
@@ -94,9 +113,6 @@ X.define('X.pivot.ViewModel', {
             for (var j = 0; j < reduceLen; j++) {
                 reservedIndexOrders.push(contexts.length);
                 var context = { info: info, reduction: beforeReductions[j], level: curDimen };
-                var cal = context.reduction.cal;
-                context.reduction.fn = cal instanceof Function ? cal
-                    : vm.reductionFnMap[cal || 'sum'] || vm.reductionFnMap.sum;
                 contexts.push(context);
             }
             if (-1 === lastChildPosition) {
@@ -110,9 +126,6 @@ X.define('X.pivot.ViewModel', {
             for (var j = 0; j < reduceLen; j++) {
                 indexOrders.push(contexts.length);
                 var context = { info: info, reduction: afterReductions[j], level: curDimen };
-                var cal = context.reduction.cal;
-                context.reduction.fn = cal instanceof Function ? cal
-                    : vm.reductionFnMap[cal || 'sum'] || vm.reductionFnMap.sum;
                 contexts.push(context);
             }
 
@@ -160,11 +173,36 @@ X.define('X.pivot.ViewModel', {
         this.rowRenderConfigs = rowRenderConfigs;
         this.colRenderConfigs = colRenderConfigs;
 
-        var columnRecords = this.constructColumnRecords(colDimenLen, columnDeriveIndexOrders, columnContexts, colResolutions);
-        this.columnRecords = columnRecords;
+        this.columnRecords = this.constructColumnRecords(colDimenLen, columnDeriveIndexOrders, columnContexts, colResolutions);
 
-        var records = this.constructRecords(rowDimenLen, colDimenLen, recordDeriveIndexOrders, recordContexts, columnDeriveIndexOrders, columnContexts, dataManager, dataIndex);
-        this.records = records;
+        this.records = this.constructRecords(rowDimenLen, colDimenLen, recordDeriveIndexOrders, recordContexts, columnDeriveIndexOrders, columnContexts, dataManager, dataIndex);
+
+        this.rowHeaderRecords = this.constructRecordRecords(rowDimenLen, recordDeriveIndexOrders, recordContexts, rowResolutions);
+
+    },
+
+    constructRecordRecords: function (rowDimenLen, recordDeriveIndexOrders, recordContexts, rowResolutions) {
+        var records = new Array(recordDeriveIndexOrders.length);
+        for (var k = 0; k < recordDeriveIndexOrders.length; k++) {
+            var rowIdx = recordDeriveIndexOrders[k];
+            var rc = recordContexts[rowIdx];
+            var record = records[rowIdx] = [];
+
+            var rowHeaderLen  = rowResolutions.length;
+            for (var i = 0; i < rowHeaderLen; i++) {
+                var rr = rowResolutions[i];
+                var columns = rr.columns || [];
+                var columnLen = columns.length;
+                var target = rc.isLeaf ? rc.info.src[0] : rc.reduction.data;
+
+                for (var j = 0; j < columnLen; j++) {
+                    var column = columns[j];
+                    record.push(target[column.field]);
+                }
+            }
+        }
+
+        return records;
     },
 
     constructColumnRecords: function (colDimenLen, columnDeriveIndexOrders, columnContexts, colResolutions) {
@@ -191,7 +229,7 @@ X.define('X.pivot.ViewModel', {
             } else {
                 // 전제: columnDeriveIndexOrders가 다소 순서가 바뀌어 있더라도 그룹별 순서는 차례로 유지되고 있다고 가정
                 // afterRender, beforeRender 외에 유동적인 위치에 column이 들어가는 정의가 추가되면 코드를 더 정제해야 함
-                var value = 'SUM'; //colResolutions[cc.level]
+                var value = cc.reduction.column.textIndex(cc.info.src);
                 for (var k = 0; k < colDimenLen; k++) {
                     curColDatasrcs[k].push(value); // 현재는 span 계산 용
                 }
