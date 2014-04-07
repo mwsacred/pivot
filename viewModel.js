@@ -1,6 +1,8 @@
 X.define('X.pivot.ViewModel', {
-    createTextIndexFn: function(field) {
-        return function(arr) { return arr[0][field]; };
+    createTextIndexFn: function (field) {
+        return function (arr) {
+            return arr[0][field];
+        };
     },
 
     initVM: function (resolutions, dataManager) {
@@ -35,8 +37,8 @@ X.define('X.pivot.ViewModel', {
                 r.fn = cal instanceof Function ? cal
                     : vm.reductionFnMap[cal || 'sum'] || vm.reductionFnMap.sum;
 
-                if(r.column && !(r.column.textIndex instanceof Function)) {
-                    if('string' == typeof r.column.textIndex) {
+                if (r.column && !(r.column.textIndex instanceof Function)) {
+                    if ('string' == typeof r.column.textIndex) {
                         r.column.textIndex = vm.createTextIndexFn(r.column.textIndex);
                     } else {
                         r.column.textIndex = X.getConstantGetter(r.column.text);
@@ -182,13 +184,15 @@ X.define('X.pivot.ViewModel', {
     },
 
     constructRecordRecords: function (rowDimenLen, recordDeriveIndexOrders, recordContexts, rowResolutions) {
+        var curRecDatasrcs = [];
+
         var records = new Array(recordDeriveIndexOrders.length);
         for (var k = 0; k < recordDeriveIndexOrders.length; k++) {
             var rowIdx = recordDeriveIndexOrders[k];
             var rc = recordContexts[rowIdx];
             var record = records[rowIdx] = [];
 
-            var rowHeaderLen  = rowResolutions.length;
+            var rowHeaderLen = rowResolutions.length;
             for (var i = 0; i < rowHeaderLen; i++) {
                 var rr = rowResolutions[i];
                 var columns = rr.columns || [];
@@ -199,10 +203,30 @@ X.define('X.pivot.ViewModel', {
                     var column = columns[j];
                     record.push(target[column.field]);
                 }
+
             }
         }
 
-        return records;
+        var spanRecords = new Array(records.length);
+        var recValLen = records[0].length;
+        var curValueObjs = new Array(recValLen);
+        for (var j = 0; j < recValLen; j++) {
+            curValueObjs[j] = {};
+        }
+        for (var i = 0; i < records.length; i++) {
+            var record = records[i];
+            var spanRecord = spanRecords[i] = [];
+            for (var j = 0; j < recValLen; j++) {
+                var value = record[j];
+                if (value && curValueObjs[j].value === value) {
+                    curValueObjs[j].span++;
+                } else {
+                    spanRecord.push(curValueObjs[j] = {value: value, span: 1});
+                }
+            }
+        }
+
+        return spanRecords;
     },
 
     constructColumnRecords: function (colDimenLen, columnDeriveIndexOrders, columnContexts, colResolutions) {
@@ -340,6 +364,8 @@ X.define('X.pivot.ViewModel', {
         rowResolutions: null,
         colResolutions: null,
 
+        rowHeaderRecords: null,
+        columnRecords: null,
         records: null
     }
 })

@@ -41,15 +41,19 @@ X.define('X.pivot.Renderer', {
                 unit.push("<tr>");
                 unit.push(recordHeader(unit, vm.rowHeaderRecords[i]));
                 unit.push("</tr>");
-//                unit.push(recordHeader(unit, recordContexts[i]));
             }
             unit.push("</table>");
         };
 
         recordHeader = function (unit, record) {
             for (var i = 0; i < record.length; i++) {
-                unit.push('<th>');
-                unit.push(record[i]);
+                var val = record[i];
+                if (1 < val.span) {
+                    unit.pushTemplate('<th rowspan="{span}">', { span: val.span });
+                } else {
+                    unit.push('<th class="leaf">');
+                }
+                unit.push(val.value);
                 unit.push('</th>');
             }
         };
