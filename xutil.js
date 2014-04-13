@@ -47,6 +47,15 @@ var X = {
 
     applyTemplate: function (expr, props) {
         return new X.Template(expr).apply(props);
+    },
+
+    getParentElementByTagName: function(elem, name) {
+        var cur = elem.parentNode;
+        while(cur.tagName.toUpperCase() !== name.toUpperCase()) {
+            cur = cur.parentNode;
+        }
+
+        return cur;
     }
 };
 

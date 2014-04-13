@@ -6,7 +6,7 @@ X.define('X.pivot.Renderer', {
         var recLen = recordContexts.length;
         var colLen = columnContexts.length;
 
-        var columnHeadersOfRecordHeaders, recordHeaders, recordHeader, columnHeaders, columnHeader, tbody, records, cell;
+        var columnHeadersOfRecordHeaders, recordHeaders, recordHeader, colgroup, columnHeaders, columnHeader, tbody, records, cell;
 
         var rowResolutions = vm.rowResolutions;
         var colResolutions = vm.colResolutions;
@@ -39,19 +39,20 @@ X.define('X.pivot.Renderer', {
 
             for (var i = 0; i < recLen; i++) {
                 unit.push("<tr>");
-                unit.push(recordHeader(unit, vm.rowHeaderRecords[i]));
+                recordHeader(unit, vm.rowHeaderRecords[i], i % 2); // TODO
                 unit.push("</tr>");
             }
             unit.push("</table>");
         };
 
-        recordHeader = function (unit, record) {
+        recordHeader = function (unit, record, altIdx) {
             for (var i = 0; i < record.length; i++) {
                 var val = record[i];
                 if (1 < val.span) {
-                    unit.pushTemplate('<th rowspan="{span}">', { span: val.span });
+                    unit.pushTemplate('<th' + (altIdx ? ' class="alt-' + altIdx + '"' : '') + ' rowspan="{span}">', { span: val.span });
                 } else {
-                    unit.push('<th class="leaf">');
+                    unit.push('<th' +
+                        (altIdx ? ' class="alt-' + altIdx + '"' : '') + '>');
                 }
                 unit.push(val.value);
                 unit.push('</th>');
@@ -68,7 +69,7 @@ X.define('X.pivot.Renderer', {
             unit.push('</th>');
         };
 
-        columnHeaders = function (unit) {
+        colgroup = function (unit) {
             var columnRecords = vm.columnRecords;
             var crsLen = columnRecords.length;
             unit.push('<colgroup>');
@@ -78,7 +79,12 @@ X.define('X.pivot.Renderer', {
                 unit.pushTemplate('<col width="{colWidth}" />', {colWidth: '100px'});
             }
             unit.push('</colgroup>');
+        }
 
+        columnHeaders = function (unit) {
+            colgroup(unit);
+            var columnRecords = vm.columnRecords;
+            var crsLen = columnRecords.length;
             for (var i = 0; i < crsLen; i++) {
                 var cr = columnRecords[i];
                 var crLen = cr.length;
@@ -92,13 +98,14 @@ X.define('X.pivot.Renderer', {
         };
 
         tbody = function (unit) {
+            colgroup(unit);
             for (var i = 0; i < recLen; i++) {
-                unit.push(records(unit, recordContexts[i], vm.records[i]));
+                unit.push(records(unit, recordContexts[i], vm.records[i], i % 2)); // TODO 2를 설정으로
             }
         };
 
-        records = function (unit, recordContext, record) {
-            unit.push("<tr>");
+        records = function (unit, recordContext, record, altIdx) {
+            unit.push(altIdx ? '<tr class="alt-' + altIdx + '">' : "<tr>");
             for (var i = 0; i < colLen; i++) {
                 unit.push(cell(unit, record[i]));
             }
@@ -168,13 +175,23 @@ X.define('X.pivot.Renderer', {
         var target = this.target;
         target.innerHTML = resultUnit.toStr();
         this.addSyncScrollFn(target);
+
+
+        var pivot = target.firstChild;
+        var r = new X.Resizer();
+
+        var thList = target.getElementsByTagName('div').item(2).getElementsByTagName('th');
+        for (var i = 0; i < thList.length; i++) {
+            var th = thList.item(i);
+            r.apply(th, pivot);
+        }
     },
 
     addSyncScrollFn: function (target) {
         // add syncing column scroll fn
         // TODO index 기반의 위험한 dom query
-        var colHeaderDom = target.getElementsByTagName('div')[2];
-        var bodyDom = target.getElementsByTagName('div')[5];
+        var colHeaderDom = target.getElementsByTagName('div').item(2);
+        var bodyDom = target.getElementsByTagName('div').item(5);
 
         var syncScroll = function () {
             bodyDom.scrollLeft = colHeaderDom.scrollLeft;
