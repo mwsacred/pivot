@@ -7,3 +7,7 @@ example:
 
     X.pivot();
     <div />
+
+XUtil
+==
+class define helper, util, getter fn util
