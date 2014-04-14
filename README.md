@@ -5,5 +5,5 @@ javascript pivot table
 
 example:
 
-   X.pivot();
-   <div />
+    X.pivot();
+    <div />
