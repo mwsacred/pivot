@@ -1,7 +1,16 @@
-pivot
+Pivot table
 =====
-
 javascript pivot table
+
+>## Feature
+>+  display fixed row/column header
+>
+>## TODO
+>+  configuration of row/column header
+>+  cell renderer/style
+>+  resizing columns
+>+  browser compatibility: ie8+, ff, safari
+>+  Progress bar / loading mask
 
 sample page: test.html
 
