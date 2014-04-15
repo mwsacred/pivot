@@ -1,5 +1,3 @@
-var resolver = new X.pivot.Resolver();
-
 var resolutions = [
     {
         type: 'row',
@@ -59,7 +57,7 @@ var resolutions = [
             {
                 cal: 'avg',
                 column: {
-                    textIndex: '합계'
+                    text: '합계'
                 },
                 renderer: null
             }
@@ -71,19 +69,8 @@ var resolutions = [
     }
 ];
 
-X.__intervalCheck();
-var dm = resolver.resolve(resolutions, data);
-console.log("resolve : " + X.__intervalCheck());
-
-var vm = new X.pivot.ViewModel();
-vm.initVM(resolutions, dm);
-console.log("constructVM : " + X.__intervalCheck());
-
-
-var r = new X.pivot.Renderer(document.getElementById('body'));
-r.render(vm);
-
-console.log("render : " + X.__intervalCheck());
+var tbl = new X.pivot.Pivot(document.getElementById('targetTbl'), resolutions);
+tbl.setData(data);
 
 
 

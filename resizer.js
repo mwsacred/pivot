@@ -89,8 +89,10 @@ X.define('X.Resizer', {
         var colHeaderDom = outer.getElementsByTagName('div').item(2);
         var bodyDom = outer.getElementsByTagName('div').item(5);
 
-        colHeaderDom.getElementsByTagName('colgroup').item(0).childNodes.item(i).width =this.dom.style.width;
-        bodyDom.getElementsByTagName('colgroup').item(0).childNodes.item(i).width =this.dom.style.width;
+        var width = this.dom.style.width;
+//        var diff = width -
+        colHeaderDom.getElementsByTagName('colgroup').item(0).childNodes.item(i).width = width;
+        bodyDom.getElementsByTagName('colgroup').item(0).childNodes.item(i).width =width;
     }
 }, function () {
     return {
