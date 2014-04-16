@@ -41,16 +41,15 @@ X.define('X.Resizer', {
         var disable, resize;
         var oldLeft, oldWidth;
         var widthSelector;
-        var extendsLeft;
         target.addEventListener('mousedown', function (elem) {
             // 성능 문제..
             me.locate(elem.target, widthSelector = elem.target, heightSelector);
             oldLeft = me.dom.offsetLeft;
             oldWidth = me.dom.offsetWidth;
             if (elem.x - oldLeft < oldWidth / 2) {
-                extendsLeft = true;
+                me.extendsLeft = true;
             } else {
-                extendsLeft = false;
+                me.extendsLeft = false;
             }
             document.addEventListener('mouseup', disable);
             document.addEventListener('mousemove', resize);
@@ -69,8 +68,8 @@ X.define('X.Resizer', {
         };
 
         resize = function (e) {
-            var diff = e.x - oldLeft;
-            if (extendsLeft) {
+            var diff = me.diff =  e.x - oldLeft;
+            if (me.extendsLeft) {
                 me.dom.style.left = e.x;
                 me.dom.style.width = oldWidth - diff;
             } else {
@@ -78,27 +77,26 @@ X.define('X.Resizer', {
             }
         }
     },
-    commit: function(target) {
-        var cur = target;
-        var i = 0;
-        while( (cur = cur.previousSibling) != null )
-            i++;
+    commit: function (target) {
+        var me = this;
+        var info = me.renderer.th2colsInfo(target);
 
-        var outer = X.getParentElementByTagName(target, 'table').parentNode.parentNode.parentNode;
+        info.headerCols[0].width = me.dom.style.width;
+        info.bodyCols[0].width = me.dom.style.width;
 
-        var colHeaderDom = outer.getElementsByTagName('div').item(2);
-        var bodyDom = outer.getElementsByTagName('div').item(5);
-
-        var width = this.dom.style.width;
-//        var diff = width -
-        colHeaderDom.getElementsByTagName('colgroup').item(0).childNodes.item(i).width = width;
-        bodyDom.getElementsByTagName('colgroup').item(0).childNodes.item(i).width =width;
+        if (me.extendsLeft) {
+            var oldWidth = Number(info.prevHeaderCols[0].width.replace(/\D+/, ''));
+            info.prevHeaderCols[0].width = oldWidth + me.diff;
+            info.prevBodyCols[0].width = oldWidth + me.diff;
+        }
     }
 }, function () {
     return {
         resizeBackgroundId: '__background__',
         enableZIndex: 999,
         disableZIndex: -999,
-        dom: null
+        dom: null,
+        extendsLeft: false,
+        diff: null
     }
 });

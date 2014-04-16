@@ -177,13 +177,14 @@ X.define('X.pivot.Renderer', {
         this.addSyncScrollFn(target);
 
 
-        var pivot = target.firstChild;
-        var r = new X.Resizer();
+        var pivot = this.dom = target.firstChild;
+        var resizer = new X.Resizer();
+        resizer.renderer = this;
 
         var thList = target.getElementsByTagName('div').item(2).getElementsByTagName('th');
         for (var i = 0; i < thList.length; i++) {
             var th = thList.item(i);
-            r.apply(th, pivot);
+            resizer.apply(th, pivot);
         }
     },
 
@@ -199,11 +200,59 @@ X.define('X.pivot.Renderer', {
 
         // 성능에 문제가 있을 수 있으나 어쩔 수 없음
         colHeaderDom.addEventListener('scroll', syncScroll);
+    },
+
+    // util fn
+    getColumnHeaderDom: function () {
+        return this.target.getElementsByTagName('div').item(2);
+    },
+
+    getBodyDom: function () {
+        return this.target.getElementsByTagName('div').item(5);
+    },
+
+    th2colsInfo: function (th) {
+        var ret = {
+            headerCols: [],
+            bodyCols: [],
+            prevHeaderCols: [],
+            prevBodyCols: []
+        };
+        var div = X.getParentElementByTagName(th, 'div');
+        var cur = th;
+        var i = 0;
+        while ((cur = cur.previousSibling) != null) {
+            i++;
+        }
+
+        var colDiv = this.getColumnHeaderDom();
+        var bodyDiv = this.getBodyDom();
+        var colCols, bodyCols;
+        var colIdxes = [i, i];
+        var prevColIdxes = [i - 1, i - 1];
+
+        if (div === colDiv) {
+            colCols = colDiv.getElementsByTagName('colgroup').item(0).childNodes;
+            bodyCols = bodyDiv.getElementsByTagName('colgroup').item(0).childNodes;
+            for (var j = colIdxes[0]; j <= colIdxes[1]; j++) {
+                ret.headerCols.push(colCols.item(j));
+                ret.bodyCols.push(bodyCols.item(j));
+            }
+            for (var j = prevColIdxes[0]; j <= prevColIdxes[1]; j++) {
+                ret.prevHeaderCols.push(colCols.item(j));
+                ret.prevBodyCols.push(bodyCols.item(j));
+            }
+        } else {
+            // TODO
+        }
+
+        return ret;
     }
+
 }, function (target) {
     return {
         target: target,
-
+        dom: null,
         defaultProps: {
             width: '100%',
             height: '100%',
