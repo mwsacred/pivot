@@ -10,8 +10,8 @@ X.define('X.Resizer', {
 
         var cur = positionSelector.offsetParent;
         while (cur) {
-            props.top += cur.offsetTop;
-            props.left += cur.offsetLeft;
+            props.top += cur.offsetTop - cur.scrollTop;
+            props.left += cur.offsetLeft - cur.scrollLeft;
             cur = cur.offsetParent;
         }
 
@@ -68,26 +68,53 @@ X.define('X.Resizer', {
         };
 
         resize = function (e) {
-            var diff = me.diff =  e.x - oldLeft;
+            var diff = e.x - oldLeft;
             if (me.extendsLeft) {
                 me.dom.style.left = e.x;
                 me.dom.style.width = oldWidth - diff;
+                me.diff = -diff;
             } else {
                 me.dom.style.width = diff;
+                me.diff = diff - oldWidth;
             }
         }
     },
     commit: function (target) {
+        function splitWidth(style) {
+            return [ Number(style.width.replace(/\D+/, '')), style.width.replace(/\d+/, '') ];
+        }
+
         var me = this;
         var info = me.renderer.th2colsInfo(target);
 
-        info.headerCols[0].width = me.dom.style.width;
-        info.bodyCols[0].width = me.dom.style.width;
+        function extracted(headerCols, diff) {
+            var len = headerCols.length;
+            var widthNums = [];
+            var ret = [];
+            var sum = 0;
+            for (var i = 0; i < len; i++) {
+                sum += widthNums[i] = splitWidth(headerCols[i])[0];
+            }
+
+            for (var i = 0; i < len; i++) {
+                ret.push(widthNums[i] + diff * widthNums[i] / sum);
+            }
+            return ret;
+        }
+
+        var widthStrs = extracted(info.headerCols, me.diff);
+        for (var i = 0; i < info.headerCols.length; i++) {
+            info.headerCols[i].width = widthStrs[i];
+            info.bodyCols[i].width = widthStrs[i];
+        }
 
         if (me.extendsLeft) {
-            var oldWidth = Number(info.prevHeaderCols[0].width.replace(/\D+/, ''));
-            info.prevHeaderCols[0].width = oldWidth + me.diff;
-            info.prevBodyCols[0].width = oldWidth + me.diff;
+            widthStrs = extracted(info.prevHeaderCols, -me.diff);
+            var prevLen = info.prevHeaderCols.length;
+            for (var i = 0; i < prevLen; i++) {
+                info.prevHeaderCols[i].width = widthStrs[i];
+                info.prevBodyCols[i].width = widthStrs[i];
+            }
         }
     }
 }, function () {

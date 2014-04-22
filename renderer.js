@@ -218,18 +218,33 @@ X.define('X.pivot.Renderer', {
             prevHeaderCols: [],
             prevBodyCols: []
         };
-        var div = X.getParentElementByTagName(th, 'div');
-        var cur = th;
-        var i = 0;
-        while ((cur = cur.previousSibling) != null) {
-            i++;
+
+        function getColChildIdx(cur) {
+            var idx = cur.colSpan - 1 || 0;
+            while ((cur = cur.previousSibling) != null) {
+                idx += cur.colSpan || 1;
+            }
+            return idx;
         }
 
+        function getChildIdx(cur) {
+            var idx = 0;
+            while ((cur = cur.previousSibling) != null) {
+                idx++;
+            }
+            return idx;
+        }
+
+        var div = X.getParentElementByTagName(th, 'div');
+        var tr = X.getParentElementByTagName(th, 'tr');
+
+        var thIdx = getColChildIdx(th.previousSibling);
+        var trIdx = getChildIdx(tr);
         var colDiv = this.getColumnHeaderDom();
         var bodyDiv = this.getBodyDom();
         var colCols, bodyCols;
-        var colIdxes = [i, i];
-        var prevColIdxes = [i - 1, i - 1];
+        var colIdxes = [thIdx + 1, thIdx + th.colSpan];
+        var prevColIdxes = [thIdx - th.previousSibling.colSpan + 1, thIdx];
 
         if (div === colDiv) {
             colCols = colDiv.getElementsByTagName('colgroup').item(0).childNodes;
