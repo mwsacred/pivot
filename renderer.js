@@ -207,6 +207,10 @@ X.define('X.pivot.Renderer', {
         return this.target.getElementsByTagName('div').item(2);
     },
 
+    getRecordHeaderDom: function () {
+        return this.target.getElementsByTagName('div').item(4);
+    },
+
     getBodyDom: function () {
         return this.target.getElementsByTagName('div').item(5);
     },
@@ -220,13 +224,16 @@ X.define('X.pivot.Renderer', {
         };
 
         function getColChildIdx(cur) {
-            var idx = cur.colSpan - 1 || 0;
+//            var idx = cur.colSpan - 1 || 0;
+            var idx = 0;
             while ((cur = cur.previousSibling) != null) {
                 idx += cur.colSpan || 1;
             }
             return idx;
         }
 
+
+        // TODO textNode는 제외해야 함
         function getChildIdx(cur) {
             var idx = 0;
             while ((cur = cur.previousSibling) != null) {
@@ -235,16 +242,63 @@ X.define('X.pivot.Renderer', {
             return idx;
         }
 
+        function findPrevTh(div, th) {
+            var ret = {
+                idx: null,
+                th: null,
+                colDiv: null,
+                bodyDiv: null
+            };
+
+            if(th.previousSibling) {
+                ret.th = th.previousSibling;
+                ret.idx = getColChildIdx(ret.th);
+                ret.colDiv = div;
+
+            } else {
+                var tr = th.parentNode
+                var trIdx = getColChildIdx(tr);
+
+                var prevDiv = div.previousSibling;
+                var prevDivTrs = prevDiv.getElementsByTagName('tr');
+                var prevDivTr = prevDivTrs.item(trIdx < prevDivTrs.length ? trIdx : prevDivTrs.length - 1);
+                var prevTh = prevDivTr.lastChild;
+
+                ret.th = prevTh;
+                ret.idx = getColChildIdx(prevTh);
+                ret.colDiv = prevDiv;
+            }
+
+//            ret.bodyDiv = ret.colDiv.parentNode.nextSibling.childNodes[getChildIdx(ret.colDiv)];
+            return ret;
+        }
+
         var div = X.getParentElementByTagName(th, 'div');
         var tr = X.getParentElementByTagName(th, 'tr');
 
-        var thIdx = getColChildIdx(th.previousSibling);
-        var trIdx = getChildIdx(tr);
-        var colDiv = this.getColumnHeaderDom();
-        var bodyDiv = this.getBodyDom();
+        var thIdx = getColChildIdx(th);
+        var colDiv = div;
+        var bodyDiv = this.getColumnHeaderDom() === colDiv ? this.getBodyDom() : this.getRecordHeaderDom();
+        var prevInfo = findPrevTh(div, th);
+        prevInfo.bodyDiv = this.getColumnHeaderDom() === prevInfo.colDiv ? this.getBodyDom() : this.getRecordHeaderDom();
+
         var colCols, bodyCols;
-        var colIdxes = [thIdx + 1, thIdx + th.colSpan];
-        var prevColIdxes = [thIdx - th.previousSibling.colSpan + 1, thIdx];
+        var colIdxes = [thIdx, thIdx + (th.colSpan - 1 || 0)];
+        var prevColIdxes = [prevInfo.idx , prevInfo.idx + (prevInfo.th.colSpan - 1 || 0)];
+
+        function extractColsOrStyles(targetColDiv) {
+            var colgroups = targetColDiv.getElementsByTagName('colgroup');
+            var ret;
+            if (colgroups.length) {
+                ret = colgroups.item(0).childNodes;
+            } else {
+                var headerTrs = targetColDiv.getElementsByTagName('tr');
+                var lastTr = headerTrs.item(0);
+                ret = X.projectProp(lastTr.childNodes, 'style');
+            }
+
+            return ret;
+        }
 
         if (div === colDiv) {
             colCols = colDiv.getElementsByTagName('colgroup').item(0).childNodes;
@@ -253,9 +307,12 @@ X.define('X.pivot.Renderer', {
                 ret.headerCols.push(colCols.item(j));
                 ret.bodyCols.push(bodyCols.item(j));
             }
+
+            colCols = extractColsOrStyles(prevInfo.colDiv);
+            bodyCols = extractColsOrStyles(prevInfo.bodyDiv);
             for (var j = prevColIdxes[0]; j <= prevColIdxes[1]; j++) {
-                ret.prevHeaderCols.push(colCols.item(j));
-                ret.prevBodyCols.push(bodyCols.item(j));
+                ret.prevHeaderCols.push(colCols[j]); // FIXME NodeList와 array를 동시에 만족시키는 구문은 이것 밖에.. NodeList의 경우에 문제가 있을 수 있으니 수정 요망
+                ret.prevBodyCols.push(bodyCols[j]);
             }
         } else {
             // TODO

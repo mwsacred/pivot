@@ -1,3 +1,5 @@
+/* TODO grouping th 조절을 두 번 연속하면 오작동
+ TODO px 기본으로만 동작하게끔 되어 있음.*/
 X.define('X.Resizer', {
     locate: function (positionSelector, widthSelector, heightSelector) {
         var props = {
@@ -81,7 +83,7 @@ X.define('X.Resizer', {
     },
     commit: function (target) {
         function splitWidth(style) {
-            return [ Number(style.width.replace(/\D+/, '')), style.width.replace(/\d+/, '') ];
+            return [ Number(style.width.replace(/\D+$/, '')), style.width.replace(/^[0-9.]+/, '') ];
         }
 
         var me = this;
