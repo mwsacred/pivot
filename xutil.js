@@ -15,8 +15,10 @@ var X = {
         return (getter instanceof Function) ? index(o) : !getter ? o : o ? o[getter] : 0 === o ? 0 : fallback;
     },
 
-    getConstantGetter: function(val) {
-        return function() { return val; } // CHECK closure 생성.
+    getConstantGetter: function (val) {
+        return function () {
+            return val;
+        } // CHECK closure 생성.
     },
 
     getPropGetter: function (getter) {
@@ -49,13 +51,67 @@ var X = {
         return new X.Template(expr).apply(props);
     },
 
-    getParentElementByTagName: function(elem, name) {
+    getParentElementByTagName: function (elem, name) {
         var cur = elem.parentNode;
-        while(cur.tagName.toUpperCase() !== name.toUpperCase()) {
+        while (cur.tagName.toUpperCase() !== name.toUpperCase()) {
             cur = cur.parentNode;
         }
 
         return cur;
+    },
+
+    getDragBackgroundHelper: function (elem, populating) {
+        var body = document.getElementById('body');
+        var bgHelper = body.__mousemoveHelper;
+        if (!bgHelper) {
+            var wrap = document.createElement('div');
+            wrap.insertAdjacentHTML('beforeend',
+                X.applyTemplate(
+                    '<div id={bgId} style="position: fixed; top: 0px; left: 0px; width: 10000px; height: 10000px; z-index: {z_index}">' +
+                        '</div>',
+                    {
+                        bgId: "__mousemoveHelper",
+                        z_index: elem.style.zIndex || 0 // TODO elem의 z-index보다 크거나 같은?
+                    }))
+            var source = wrap.lastChild;
+            bgHelper = body.__mousemoveHelper = source.cloneNode(true);
+            if (populating) {
+                body.appendChild(bgHelper);
+            }
+        } else {
+            if (populating && bgHelper !== body.lastChild) {
+                body.appendChild(bgHelper);
+            }
+        }
+        return bgHelper;
+    },
+
+    // TODO self destroy 함수 있어야 함
+    // TODO deltaLeft, deltaRight, deltaTop, deltaBottom 등 필요
+    populateSizeIndicator: function (elem, topElem, rightElem, bottomElem, leftElem) {
+        var bgHelper = X.getDragBackgroundHelper(elem, true);
+        var topRect = topElem.getBoundingClientRect(),
+            leftRect = leftElem.getBoundingClientRect(),
+            rightRect = rightElem.getBoundingClientRect(),
+            bottomRect = bottomElem.getBoundingClientRect();
+
+        var props = {
+            bgId: 'tt',
+            top: topRect.top,
+            left: leftRect.left,
+            width: rightRect.right - leftRect.left,
+            height: bottomRect.bottom - topRect.top
+        };
+
+        var helper = X.applyTemplate(
+            '<div style="position: fixed; background-color: deepskyblue; opacity: 0.5; top: {top}px; left: {left}px; width: {width}px; height: {height}px; z-index: 1000" />', props);
+        console.log('locate');
+
+        bgHelper.insertAdjacentHTML('beforeend', helper);
+        return bgHelper.lastChild;
+    },
+
+    EMPTY_FN: function () {
     }
 };
 
@@ -69,38 +125,80 @@ var X = {
     };
 })();
 
-X.define = function (className, prototypeProps, constructor) {
+X.initPackage = function (className) {
     var pkgs = className.split('.');
     var simpleClassName = pkgs.pop();
     var pkgLen = pkgs.length;
-    var tmp = X.defaultScope[pkgs[0]];
+    var ret = X.defaultScope[pkgs[0]];
 
     // package 존재하는 지 체크
-    if (!tmp) {
+    if (!ret) {
         // 존재하지 않음
-        X.defaultScope[pkgs[0]] = tmp = {};
+        X.defaultScope[pkgs[0]] = ret = {};
     }
 
     for (var i = 1; i < pkgLen; i++) {
-        tmp[pkgs[i]] || (tmp[pkgs[i]] = {});
-        tmp = tmp[pkgs[i]];
+        ret[pkgs[i]] || (ret[pkgs[i]] = {});
+        ret = ret[pkgs[i]];
     }
 
-    var construct = function () {
-        var props = constructor.apply(this, arguments);
-        for (var propName in props) {
-            if (props.hasOwnProperty(propName)) {
-                var prop = props[propName];
-                this[propName] = prop;
+    return ret;
+};
+
+X.predefine = function (className, constructor) {
+    var simpleClassName = className.split('.').pop();
+    var pkg = X.initPackage(className);
+    var construct;
+
+    if (constructor) {
+        construct = function () {
+            var props = constructor.apply(this, arguments);
+            for (var propName in props) {
+                if (props.hasOwnProperty(propName)) {
+                    var prop = props[propName];
+                    this[propName] = prop;
+                }
             }
-        }
+        };
+    } else {
+        construct = function () {
+        };
     }
 
-    tmp[simpleClassName] = construct;
+    pkg[simpleClassName] = construct;
+    return construct;
+};
+
+X.applyPrototype = function (construct, prototypeProps) {
     for (var propName in prototypeProps) {
         if (prototypeProps.hasOwnProperty(propName)) {
             var prop = prototypeProps[propName];
             construct.prototype[propName] = prop;
         }
     }
-}
+};
+
+X.define = function (className, prototypeProps, constructor) {
+    var construct = X.predefine(className, constructor);
+    X.applyPrototype(construct, prototypeProps);
+    return construct;
+};
+
+X.extend = function (className, superClass, prototypeProps, constructor) {
+    'string' === typeof superClass && (superClass = eval(superClass));
+    var construct = X.predefine(className, constructor);
+
+    function createObject(proto) {
+        function ctor() {
+        }
+
+        ctor.prototype = proto;
+        return new ctor();
+    }
+
+    construct.prototype = createObject(superClass.prototype);
+    X.applyPrototype(construct, prototypeProps);
+    construct.prototype.constructor = construct;
+
+    return construct;
+};

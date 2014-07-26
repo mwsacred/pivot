@@ -10,7 +10,15 @@
             position: relative;
         }
 
-        .x-pivot .x-left.x-top {
+        .x-pivot .x-left {
+        }
+
+        .x-pivot .x-right {
+            border-left: 1px #157fcc solid;
+        }
+
+        .x-pivot .x-left tr > th:last-child {
+            border-right: 0
         }
 
         .x-pivot .x-left.x-bottom {
@@ -54,7 +62,7 @@
             color: #666666;
 
             width: 100px;
-            height: 22px;
+            height: inherit;
         }
 
         .x-pivot .x-col-theader th {
@@ -68,7 +76,7 @@
             color: #666666;
 
             width: 100px;
-            height: 22px;
+            height: inherit;
         }
 
         .x-pivot .x-rec-theader th {
@@ -81,7 +89,6 @@
             color: #666666;
 
             width: 100px;
-            height: 22px;
         }
 
         .x-pivot table {
@@ -91,33 +98,51 @@
         }
 
         .x-pivot tr {
-            height: 20px;
+            height: 22px;
+            transition: height 0.5s;
+            -moz-transition: height 0.5s;
+            -webkit-transition: height 0.5s;
         }
 
         .x-pivot th {
+            border: 1px solid #ededed;
             text-overflow: ellipsis;
             white-space: nowrap;
             overflow: hidden;
-            height: 22px;
+            height: inherit;
         }
 
         .x-pivot td {
+            border: 1px solid #ededed;
+            padding: 0;
+            width: 100px;
+            height: inherit;
+        }
+
+        .x-pivot th>*, .x-pivot td>* {
+            display: block;
+            height: inherit;
+            overflow: hidden;
             text-overflow: ellipsis;
             white-space: nowrap;
-            overflow: hidden;
-            width: 100px;
-            height: 22px;
+        }
+
+        .x-pivot .colgroup {
+            height: 0;
+        }
+
+        .x-pivot .colgroup .col {
+            border-width: 0;
+            margin: 0;
+            padding: 0;
+            height: 0;
         }
 
         .x-pivot .x-right tr > *:first-child {
             border-left: 0 !important;
         }
 
-        .x-pivot .x-left tr > *:last-child {
-            border-right-color: #157fcc;
-        }
-
-        .x-pivot .x-bottom tr:first-child > * {
+        .x-pivot .x-bottom tr:nth-child(2) > * {
             border-top: 1px solid white;
             text-overflow: ellipsis;
             white-space: nowrap;
@@ -129,18 +154,8 @@
             visibility: hidden;
         }
 
-        .x-pivot th {
-            box-sizing: border-box;
-            border: 1px solid #ededed;
-        }
-
         .x-pivot th.alt-1 {
             background-color: #fafafa;
-        }
-
-        .x-pivot td {
-            box-sizing: border-box;
-            border: 1px solid #ededed;
         }
 
         .x-pivot .alt-1 td {
@@ -156,6 +171,8 @@
     <script type="text/javascript" src="resolver.js"></script>
     <script type="text/javascript" src="viewModel.js"></script>
     <script type="text/javascript" src="resizer.js"></script>
+    <script type="text/javascript" src="_resizer.js"></script>
+    <script type="text/javascript" src="law.js"></script>
     <script type="text/javascript" src="renderer.js"></script>
 </head>
 <body id="body">

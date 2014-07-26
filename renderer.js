@@ -6,7 +6,7 @@ X.define('X.pivot.Renderer', {
         var recLen = recordContexts.length;
         var colLen = columnContexts.length;
 
-        var columnHeadersOfRecordHeaders, recordHeaders, recordHeader, colgroup, columnHeaders, columnHeader, tbody, records, cell;
+        var columnHeadersOfRecordHeaders, recordHeaders, recordHeader, _cols, colgroup, columnHeaders, columnHeader, tbody, records, cell;
 
         var rowResolutions = vm.rowResolutions;
         var colResolutions = vm.colResolutions;
@@ -16,9 +16,13 @@ X.define('X.pivot.Renderer', {
 
         // TODO viewModel에서 제공해주는 data를 써야 함(현재는 column.text로...).
         columnHeadersOfRecordHeaders = function (unit, props) {
-            unit.push("<table class='x-theader'>");
-            unit.push('<tr>');
+            unit.push('<tr class="colgroup">');
+            for (var j = 0; j < rowHeaderLen; j++) {
+                unit.push('<th class="col" style="width: 100px;">');
+            }
+            unit.push('</tr>');
 
+            unit.push('<tr>');
             for (var i = 0; i < rowHeaderLen; i++) {
                 var rr = rowResolutions[i];
                 var columns = rr.columns || [];
@@ -31,11 +35,16 @@ X.define('X.pivot.Renderer', {
                 }
             }
             unit.push('</tr>');
-            unit.push("</table>");
         };
 
         recordHeaders = function (unit) {
             unit.push("<table class='x-rec-theader'>");
+
+            unit.push('<tr class="colgroup">');
+            for (var j = 0; j < rowHeaderLen; j++) {
+                unit.push('<th class="col" style="width: 100px;">');
+            }
+            unit.push('</tr>');
 
             for (var i = 0; i < recLen; i++) {
                 unit.push("<tr>");
@@ -54,7 +63,9 @@ X.define('X.pivot.Renderer', {
                     unit.push('<th' +
                         (altIdx ? ' class="alt-' + altIdx + '"' : '') + '>');
                 }
+                unit.push('<div>');
                 unit.push(val.value);
+                unit.push('</div>');
                 unit.push('</th>');
             }
         };
@@ -69,20 +80,26 @@ X.define('X.pivot.Renderer', {
             unit.push('</th>');
         };
 
-        colgroup = function (unit) {
-            var columnRecords = vm.columnRecords;
-            var crsLen = columnRecords.length;
-            unit.push('<colgroup>');
-            var cr = columnRecords[crsLen - 1];
+        _cols = function (cr, unit) {
             var crLen = cr.length;
             for (var j = 0; j < crLen; j++) {
                 unit.pushTemplate('<col width="{colWidth}" />', {colWidth: '100px'});
             }
-            unit.push('</colgroup>');
+        }
+
+        colgroup = function (unit, columnRecords) {
+            var crsLen = columnRecords.length;
+            var cr = columnRecords[crsLen - 1];
+            var crLen = cr.length;
+            unit.push('<tr class="colgroup">');
+            for (var j = 0; j < crLen; j++) {
+                unit.push('<th class="col" style="width: 100px;">');
+            }
+            unit.push('</tr>');
         }
 
         columnHeaders = function (unit) {
-            colgroup(unit);
+            colgroup(unit, vm.columnRecords);
             var columnRecords = vm.columnRecords;
             var crsLen = columnRecords.length;
             for (var i = 0; i < crsLen; i++) {
@@ -98,7 +115,7 @@ X.define('X.pivot.Renderer', {
         };
 
         tbody = function (unit) {
-            colgroup(unit);
+            colgroup(unit, vm.columnRecords);
             for (var i = 0; i < recLen; i++) {
                 unit.push(records(unit, recordContexts[i], vm.records[i], i % 2)); // TODO 2를 설정으로
             }
@@ -114,7 +131,9 @@ X.define('X.pivot.Renderer', {
 
         cell = function (unit, val) {
             unit.push('<td>');
+            unit.push('<div>');
             unit.push(val);
+            unit.push('</div>');
             unit.push('</td>');
         };
 
@@ -149,7 +168,9 @@ X.define('X.pivot.Renderer', {
         resultUnit.pushTemplate("<div class='x-pivot x-outer-div' style='width: {width}; height: {height}'>", props);
 
         resultUnit.pushTemplate("<div class='x-left x-top' style='width: {recHeaderWidth}'>", props);
+        resultUnit.push("<table class='x-theader'>");
         resultUnit.pushUnit(unit1_1);
+        resultUnit.push("</table>");
         resultUnit.push("</div>");
 
         resultUnit.pushTemplate("<div class='x-right x-top' style='width: calc(100% - {recHeaderWidth}); left: {recHeaderWidth}'>", props);
@@ -165,7 +186,7 @@ X.define('X.pivot.Renderer', {
         resultUnit.push("</div>");
 
         resultUnit.pushTemplate("<div class='x-right x-bottom' style='width: calc(100% - {recHeaderWidth}); left: {recHeaderWidth}'>", props);
-        resultUnit.push("<table class='x-tbody'");
+        resultUnit.push("<table class='x-tbody'>");
         resultUnit.pushUnit(unit2_2);
         resultUnit.push("</table>");
         resultUnit.push("</div>");
@@ -178,21 +199,103 @@ X.define('X.pivot.Renderer', {
 
 
         var pivot = this.dom = target.firstChild;
-        var resizer = new X.Resizer();
-        resizer.renderer = this;
+        var columnHeaderDom = this.getColumnHeaderDom();
+        var bodyDom = this.getBodyDom();
+        var resizer = new X.Resizer(columnHeaderDom, function(elem) {
+            return {
+                top: elem,
+                right: elem,
+                bottom: pivot,
+                left: elem
+            };
+        });
 
-        var thList = target.getElementsByTagName('div').item(2).getElementsByTagName('th');
-        for (var i = 0; i < thList.length; i++) {
-            var th = thList.item(i);
-            resizer.apply(th, pivot);
+        function targetDomInBody(elem) {
+            var indexOf = function(p, c) {
+                return Array.prototype.indexOf.call(p.childNodes, c);
+            };
+
+            var c = elem;
+            var indexArr = [];
+
+            while(c !== columnHeaderDom) {
+                var p = c.parentNode;
+                indexArr.push(indexOf(p, c));
+                c = p;
+            }
+
+            var target = bodyDom;
+            while(indexArr.length) {
+                target = target.childNodes.item(indexArr.pop());
+            }
+
+            return target;
         }
+
+        var headerDomOfRecordHeader = this.getHeaderDomOfRecordHeader();
+        var recordHeaderDom = this.getRecordHeaderDom();
+        var childrenFn = resizer.modifier.children.bind(resizer.modifier);
+        resizer.modifier.children = function(target) {
+            var children = childrenFn(target);
+            if(children && children.length) {
+                var totalChildren = children[0].parentNode.childNodes;
+                var startIdx = Array.prototype.indexOf.call(totalChildren, children[0]);
+                var endIdx = Array.prototype.indexOf.call(totalChildren, children[children.length-1]);
+
+                var cur = target;
+                while(cur !== headerDomOfRecordHeader && cur !== columnHeaderDom) {
+                    cur = cur.parentNode;
+                }
+
+                var outer = cur === headerDomOfRecordHeader ? recordHeaderDom : bodyDom;
+
+                var anothers = Array.prototype.slice.call(outer.getElementsByTagName('tr')[0].childNodes, startIdx, endIdx + 1);
+                for (var i = 0; i < children.length; i++) {
+                    children[i] = [children[i], anothers[i]];
+                }
+            }
+
+            return children;
+        };
+
+        var correctOuterFn = resizer.modifier.correctOuterWidth.bind(resizer.modifier);
+        resizer.modifier.correctOuterWidth = function(elem, prevSibling, width, prevWidth) {
+            correctOuterFn(elem, prevSibling, width, prevWidth);
+            var cur = elem;
+            while(cur !== headerDomOfRecordHeader && cur !== columnHeaderDom) {
+                cur = cur.parentNode;
+            }
+
+            var curPrev = prevSibling;
+            while(curPrev !== headerDomOfRecordHeader && curPrev !== columnHeaderDom) {
+                curPrev = curPrev.parentNode;
+            }
+
+            if(cur !== curPrev) {
+                correctOuterFn(bodyDom, recordHeaderDom, width, prevWidth);
+            }
+        };
+
+//        resizer.modifier.modifyRightSide = function(elem, width) {
+//            var prevWidth = elem.offsetWidth;
+//            var fn = X.WidthModifier.prototype.modifyRightSide;
+//            fn.call(this, elem, width);
+//            var children = resizer.modifier.children(elem);
+//            var totalChildren = children[0].parentNode.childNodes;
+//            var startIdx = Array.prototype.indexOf.call(totalChildren, children[0]);
+//            var endIdx = Array.prototype.indexOf.call(totalChildren, children[children.length-1]);
+//            var targets = Array.prototype.slice.call(bodyDom.getElementsByTagName('tr')[0].childNodes, startIdx, endIdx + 1);
+//            resizer.modifier.shareWidthToDoms(targets, width, prevWidth);
+//        };
+        resizer.apply();
+        resizer.renderer = this;
     },
 
     addSyncScrollFn: function (target) {
         // add syncing column scroll fn
         // TODO index 기반의 위험한 dom query
-        var colHeaderDom = target.getElementsByTagName('div').item(2);
-        var bodyDom = target.getElementsByTagName('div').item(5);
+        var colHeaderDom = this.getColumnHeaderDom();
+        var bodyDom = this.getBodyDom();
 
         var syncScroll = function () {
             bodyDom.scrollLeft = colHeaderDom.scrollLeft;
@@ -203,16 +306,20 @@ X.define('X.pivot.Renderer', {
     },
 
     // util fn
+    getHeaderDomOfRecordHeader: function () {
+        return this.target.getElementsByTagName('div').item(1);
+    },
+
     getColumnHeaderDom: function () {
         return this.target.getElementsByTagName('div').item(2);
     },
 
     getRecordHeaderDom: function () {
-        return this.target.getElementsByTagName('div').item(4);
+        return this.target.getElementsByTagName('div').item(3).childNodes.item(0);
     },
 
     getBodyDom: function () {
-        return this.target.getElementsByTagName('div').item(5);
+        return this.target.getElementsByTagName('div').item(3).childNodes.item(1);
     },
 
     th2colsInfo: function (th) {
@@ -220,7 +327,9 @@ X.define('X.pivot.Renderer', {
             headerCols: [],
             bodyCols: [],
             prevHeaderCols: [],
-            prevBodyCols: []
+            prevBodyCols: [],
+            prevHeaderDiv: null,
+            prevBodyDiv: null
         };
 
         function getColChildIdx(cur) {
@@ -250,7 +359,7 @@ X.define('X.pivot.Renderer', {
                 bodyDiv: null
             };
 
-            if(th.previousSibling) {
+            if (th.previousSibling) {
                 ret.th = th.previousSibling;
                 ret.idx = getColChildIdx(ret.th);
                 ret.colDiv = div;
@@ -313,6 +422,8 @@ X.define('X.pivot.Renderer', {
             for (var j = prevColIdxes[0]; j <= prevColIdxes[1]; j++) {
                 ret.prevHeaderCols.push(colCols[j]); // FIXME NodeList와 array를 동시에 만족시키는 구문은 이것 밖에.. NodeList의 경우에 문제가 있을 수 있으니 수정 요망
                 ret.prevBodyCols.push(bodyCols[j]);
+                ret.prevHeaderDiv = prevInfo.colDiv;
+                ret.prevBodyDiv = prevInfo.bodyDiv;
             }
         } else {
             // TODO
